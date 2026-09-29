@@ -99,6 +99,16 @@ bool SessionManager::hasSession(const std::string &session_id) {
   return sessions_.find(session_id) != sessions_.end();
 }
 
+std::vector<std::string> SessionManager::listSessionIds() {
+  std::lock_guard<std::mutex> lock(mutex_);
+  std::vector<std::string> ids;
+  ids.reserve(sessions_.size());
+  for (const auto &kv : sessions_) {
+    ids.push_back(kv.first);
+  }
+  return ids;
+}
+
 std::vector<std::string> SessionManager::getInputNames(const std::string &session_id) {
   std::lock_guard<std::mutex> lock(mutex_);
 
