@@ -75,9 +75,25 @@ if(NOT USE_SYSTEM_ONNXRUNTIME)
     set(ONNXRUNTIME_ARCH "x86")
   endif()
 
+  # Choose between the CPU-only package and the CUDA-enabled (GPU) package.
+  # The GPU package is only published for x64. It requires the CUDA 12.x toolkit and cuDNN 9.x to be installed on the
+  # machine at runtime (their bin folders must be on PATH); CPU-only inference still works without them.
+  # Disable with: -DONNXRUNTIME_USE_GPU=OFF
+  option(ONNXRUNTIME_USE_GPU "Download the CUDA-enabled ONNX Runtime package" ON)
+  if(ONNXRUNTIME_USE_GPU AND NOT ONNXRUNTIME_ARCH STREQUAL "x64")
+    message(WARNING "The GPU ONNX Runtime package is only available for x64; falling back to the CPU package.")
+    set(ONNXRUNTIME_USE_GPU OFF)
+  endif()
+
+  if(ONNXRUNTIME_USE_GPU)
+    set(ONNXRUNTIME_PACKAGE "onnxruntime-win-${ONNXRUNTIME_ARCH}-gpu-${ONNXRUNTIME_VERSION}")
+  else()
+    set(ONNXRUNTIME_PACKAGE "onnxruntime-win-${ONNXRUNTIME_ARCH}-${ONNXRUNTIME_VERSION}")
+  endif()
+
   # Set download URL with correct naming pattern for Windows
   set(ONNXRUNTIME_URL
-      "https://github.com/microsoft/onnxruntime/releases/download/v${ONNXRUNTIME_VERSION}/onnxruntime-win-${ONNXRUNTIME_ARCH}-${ONNXRUNTIME_VERSION}.zip"
+      "https://github.com/microsoft/onnxruntime/releases/download/v${ONNXRUNTIME_VERSION}/${ONNXRUNTIME_PACKAGE}.zip"
   )
 
   message(STATUS "Downloading ONNX Runtime from: ${ONNXRUNTIME_URL}")
@@ -88,7 +104,7 @@ if(NOT USE_SYSTEM_ONNXRUNTIME)
   # Download and extract ONNX Runtime - using file(DOWNLOAD) for more direct control
   if(NOT
      EXISTS
-     "${ONNXRUNTIME_DOWNLOAD_DIR}/onnxruntime-win-${ONNXRUNTIME_ARCH}-${ONNXRUNTIME_VERSION}/include/onnxruntime_cxx_api.h"
+     "${ONNXRUNTIME_DOWNLOAD_DIR}/${ONNXRUNTIME_PACKAGE}/include/onnxruntime_cxx_api.h"
   )
     message(STATUS "Downloading ONNX Runtime...")
     file(MAKE_DIRECTORY ${ONNXRUNTIME_DOWNLOAD_DIR})
@@ -107,7 +123,7 @@ if(NOT USE_SYSTEM_ONNXRUNTIME)
   endif()
 
   # Set paths to the extracted files
-  set(ONNXRUNTIME_EXTRACT_DIR "${ONNXRUNTIME_DOWNLOAD_DIR}/onnxruntime-win-${ONNXRUNTIME_ARCH}-${ONNXRUNTIME_VERSION}")
+  set(ONNXRUNTIME_EXTRACT_DIR "${ONNXRUNTIME_DOWNLOAD_DIR}/${ONNXRUNTIME_PACKAGE}")
 
   # Verify the directory exists
   if(NOT EXISTS ${ONNXRUNTIME_EXTRACT_DIR})
@@ -149,8 +165,19 @@ if(NOT USE_SYSTEM_ONNXRUNTIME)
 
   set(ONNXRUNTIME_LIBRARIES ${ONNXRUNTIME_LIBRARY})
 
+  # Collect every runtime DLL next to onnxruntime.dll. The GPU package also ships onnxruntime_providers_shared.dll and
+  # onnxruntime_providers_cuda.dll (and TensorRT), which ONNX Runtime loads on demand and which must sit beside it.
+  get_filename_component(ONNXRUNTIME_DLL_DIR "${ONNXRUNTIME_DLL}" DIRECTORY)
+  file(GLOB ONNXRUNTIME_ALL_DLLS "${ONNXRUNTIME_DLL_DIR}/*.dll")
+  if(NOT ONNXRUNTIME_ALL_DLLS)
+    set(ONNXRUNTIME_ALL_DLLS ${ONNXRUNTIME_DLL})
+  endif()
+  foreach(DLL ${ONNXRUNTIME_ALL_DLLS})
+    message(STATUS "Will bundle DLL: ${DLL}")
+  endforeach()
+
   # Add to bundled libraries for distribution
-  set(flutter_onnxruntime_bundled_libraries ${ONNXRUNTIME_DLL})
+  set(flutter_onnxruntime_bundled_libraries ${ONNXRUNTIME_ALL_DLLS})
 endif()
 
 # Define Windows-specific preprocessor macros
@@ -223,12 +250,12 @@ target_link_libraries(${PLUGIN_NAME} PRIVATE ${ONNXRUNTIME_LIBRARIES})
 target_link_libraries(${PLUGIN_NAME} PRIVATE Shlwapi)
 
 # Copy over ONNX Runtime DLL to the build directory
-if(NOT USE_SYSTEM_ONNXRUNTIME AND ONNXRUNTIME_DLL)
+if(NOT USE_SYSTEM_ONNXRUNTIME AND ONNXRUNTIME_ALL_DLLS)
   add_custom_command(
     TARGET ${PLUGIN_NAME}
     POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${ONNXRUNTIME_DLL} $<TARGET_FILE_DIR:${PLUGIN_NAME}>
-    COMMENT "Copying ONNX Runtime DLL to build directory")
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${ONNXRUNTIME_ALL_DLLS} $<TARGET_FILE_DIR:${PLUGIN_NAME}>
+    COMMENT "Copying ONNX Runtime DLLs to build directory")
 endif()
 
 # List of absolute paths to libraries that should be bundled with the plugin. This list could contain prebuilt
