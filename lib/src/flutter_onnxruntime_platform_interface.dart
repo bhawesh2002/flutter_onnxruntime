@@ -64,6 +64,16 @@ abstract class FlutterOnnxruntimePlatform extends PlatformInterface {
     throw UnimplementedError('closeSession() has not been implemented.');
   }
 
+  /// List the IDs of all sessions currently held in native memory.
+  ///
+  /// Useful for reconciling app state after a Flutter hot restart, since
+  /// hot restart does not invoke [closeSession] on sessions created before
+  /// the restart (only the Dart isolate is torn down and recreated; native
+  /// session state persists).
+  Future<List<String>> listSessionIds() {
+    throw UnimplementedError('listSessionIds() has not been implemented.');
+  }
+
   /// Get metadata about the model
   ///
   /// [sessionId] is the ID of the session to get metadata from

@@ -47,6 +47,9 @@ private:
   void HandleCloseSession(const flutter::MethodCall<flutter::EncodableValue> &method_call,
                           std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
 
+  void HandleListSessionIds(const flutter::MethodCall<flutter::EncodableValue> &method_call,
+                            std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
+
   void HandleGetMetadata(const flutter::MethodCall<flutter::EncodableValue> &method_call,
                          std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
 

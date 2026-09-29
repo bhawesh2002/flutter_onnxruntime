@@ -9,6 +9,7 @@
 #include <gtest/gtest.h>
 
 #include "include/flutter_onnxruntime/flutter_onnxruntime_plugin.h"
+#include "src/session_manager.h"
 
 // Define the macro for casting to the plugin type
 #define FLUTTER_ONNXRUNTIME_PLUGIN(obj)                                                                                \
@@ -36,4 +37,13 @@ TEST(FlutterOnnxruntimePlugin, GetPlatformVersion) {
       FLUTTER_ONNXRUNTIME_PLUGIN(g_object_new(flutter_onnxruntime_plugin_get_type(), nullptr));
   EXPECT_NE(plugin, nullptr);
   g_object_unref(plugin);
+}
+
+// Test that a freshly created SessionManager reports no open sessions.
+// (A createSession -> listSessionIds -> closeSession round trip needs a real
+// model file to load, so it's better covered as an integration test alongside
+// the other SessionManager behavior rather than duplicated here.)
+TEST(SessionManager, ListSessionIdsIsEmptyForFreshManager) {
+  SessionManager session_manager;
+  EXPECT_TRUE(session_manager.listSessionIds().empty());
 }

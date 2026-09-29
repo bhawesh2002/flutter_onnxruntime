@@ -105,6 +105,9 @@ void FlutterOnnxruntimePlugin::HandleMethodCall(
   } else if (method_name == "closeSession") {
     HandleCloseSession(method_call, std::move(result));
     return;
+  } else if (method_name == "listSessionIds") {
+    HandleListSessionIds(method_call, std::move(result));
+    return;
   } else if (method_name == "getMetadata") {
     HandleGetMetadata(method_call, std::move(result));
     return;
@@ -787,6 +790,25 @@ void FlutterOnnxruntimePlugin::HandleRunInference(
     result->Success(flutter::EncodableValue(outputs_map));
   } catch (const Ort::Exception &e) {
     result->Error("INFERENCE_ERROR", e.what(), nullptr);
+  } catch (const std::exception &e) {
+    result->Error("PLUGIN_ERROR", e.what(), nullptr);
+  } catch (...) {
+    result->Error("INTERNAL_ERROR", "Unknown error occurred", nullptr);
+  }
+}
+
+void FlutterOnnxruntimePlugin::HandleListSessionIds(
+    const flutter::MethodCall<flutter::EncodableValue> &method_call,
+    std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
+  try {
+    std::vector<std::string> session_ids = impl_->sessionManager_->listSessionIds();
+
+    flutter::EncodableList encodable_ids;
+    encodable_ids.reserve(session_ids.size());
+    for (const auto &id : session_ids) {
+      encodable_ids.push_back(flutter::EncodableValue(id));
+    }
+    result->Success(flutter::EncodableValue(encodable_ids));
   } catch (const std::exception &e) {
     result->Error("PLUGIN_ERROR", e.what(), nullptr);
   } catch (...) {

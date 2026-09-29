@@ -109,6 +109,8 @@ public class FlutterOnnxruntimePlugin: NSObject, FlutterPlugin {
       handleRunInference(call: call, result: result)
     case "closeSession":
       handleCloseSession(call: call, result: result)
+    case "listSessionIds":
+      handleListSessionIds(call: call, result: result)
     case "getMetadata":
       handleGetMetadata(call: call, result: result)
     case "getInputInfo":
@@ -348,6 +350,13 @@ public class FlutterOnnxruntimePlugin: NSObject, FlutterPlugin {
     } else {
       result(FlutterError(code: "INVALID_SESSION", message: "Session not found", details: nil))
     }
+  }
+
+  /// Lists the IDs of all sessions currently held in memory. Useful for
+  /// reconciling app state after a Flutter hot restart, since hot restart
+  /// does not invoke OrtSession.close() on sessions created before it.
+  private func handleListSessionIds(call: FlutterMethodCall, result: @escaping FlutterResult) {
+    result(Array(sessions.keys))
   }
 
   private func handleGetMetadata(call: FlutterMethodCall, result: @escaping FlutterResult) {

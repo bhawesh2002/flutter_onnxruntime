@@ -59,6 +59,11 @@ public:
   // Get session info
   bool hasSession(const std::string &session_id);
 
+  // List the IDs of all sessions currently held in memory. Useful for
+  // reconciling app state after a Flutter hot restart, since hot restart
+  // does not invoke OrtSession.close() on sessions created before it.
+  std::vector<std::string> listSessionIds();
+
   // Get input names for a session
   std::vector<std::string> getInputNames(const std::string &session_id);
 

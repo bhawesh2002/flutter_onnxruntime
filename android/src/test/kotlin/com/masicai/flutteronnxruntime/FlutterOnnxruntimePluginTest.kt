@@ -24,4 +24,15 @@ internal class FlutterOnnxruntimePluginTest {
 
         Mockito.verify(mockResult).success("Android " + android.os.Build.VERSION.RELEASE)
     }
+
+    @Test
+    fun onMethodCall_listSessionIds_returnsEmptyListWhenNoSessionsExist() {
+        val plugin = FlutterOnnxruntimePlugin()
+
+        val call = MethodCall("listSessionIds", null)
+        val mockResult: MethodChannel.Result = Mockito.mock(MethodChannel.Result::class.java)
+        plugin.onMethodCall(call, mockResult)
+
+        Mockito.verify(mockResult).success(emptyList<String>())
+    }
 }

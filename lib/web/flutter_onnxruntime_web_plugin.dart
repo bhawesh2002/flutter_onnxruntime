@@ -437,6 +437,14 @@ class FlutterOnnxruntimeWebPlugin extends FlutterOnnxruntimePlatform {
     }
   }
 
+  /// Lists the IDs of all sessions currently held in memory. Useful for
+  /// reconciling app state after a Flutter hot restart, since hot restart
+  /// does not invoke OrtSession.close() on sessions created before it.
+  @override
+  Future<List<String>> listSessionIds() async {
+    return _sessions.keys.toList();
+  }
+
   @override
   Future<Map<String, dynamic>> getMetadata(String sessionId) async {
     try {

@@ -494,6 +494,12 @@ class FlutterOnnxruntimePlugin : FlutterPlugin, MethodCallHandler {
                         result.error("PLUGIN_ERROR", e.message, e.stackTraceToString())
                     }
                 }
+                // Lists the IDs of all sessions currently held in memory. Useful for
+                // reconciling app state after a Flutter hot restart, since hot restart
+                // does not invoke OrtSession.close() on sessions created before it.
+                "listSessionIds" -> {
+                    result.success(sessions.keys.toList())
+                }
                 /** Get metadata about the model
 
                  Returns metadata about the model such as producer name, graph name, domain, description, version, and custom metadata.

@@ -20,6 +20,19 @@ class OnnxRuntime {
     return FlutterOnnxruntimePlatform.instance.getPlatformVersion();
   }
 
+  /// List the IDs of all sessions currently held in native memory.
+  ///
+  /// This is primarily useful for reconciling app state after a Flutter
+  /// hot restart: hot restart only destroys and recreates the Dart isolate,
+  /// it does not call [OrtSession.close] on sessions created before the
+  /// restart, so their native memory would otherwise remain allocated with
+  /// no Dart-side reference left to release it. On startup, compare this
+  /// list against the session(s) your app currently needs and close any
+  /// that are left over from a previous run.
+  Future<List<String>> listSessions() {
+    return FlutterOnnxruntimePlatform.instance.listSessionIds();
+  }
+
   /// Create an ONNX Runtime session with the given model path
   Future<OrtSession> createSession(String modelPath, {OrtSessionOptions? options}) async {
     final result = await FlutterOnnxruntimePlatform.instance.createSession(

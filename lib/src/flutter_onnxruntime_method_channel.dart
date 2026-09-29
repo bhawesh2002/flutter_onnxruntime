@@ -79,6 +79,13 @@ class MethodChannelFlutterOnnxruntime extends FlutterOnnxruntimePlatform {
     await methodChannel.invokeMethod<void>('closeSession', {'sessionId': sessionId});
   }
 
+  /// List the IDs of all sessions currently held in native memory.
+  @override
+  Future<List<String>> listSessionIds() async {
+    final result = await methodChannel.invokeMethod<List<Object?>>('listSessionIds');
+    return result?.map((item) => item.toString()).toList() ?? [];
+  }
+
   @override
   Future<Map<String, dynamic>> getMetadata(String sessionId) async {
     final result = await methodChannel.invokeMethod<Map<Object?, Object?>>('getMetadata', {'sessionId': sessionId});

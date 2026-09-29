@@ -55,6 +55,7 @@ static FlMethodResponse *create_session(FlutterOnnxruntimePlugin *self, FlValue 
 static FlMethodResponse *get_available_providers(FlutterOnnxruntimePlugin *self, FlValue *args);
 static FlMethodResponse *run_inference(FlutterOnnxruntimePlugin *self, FlValue *args);
 static FlMethodResponse *close_session(FlutterOnnxruntimePlugin *self, FlValue *args);
+static FlMethodResponse *list_session_ids(FlutterOnnxruntimePlugin *self, FlValue *args);
 static FlMethodResponse *get_metadata(FlutterOnnxruntimePlugin *self, FlValue *args);
 static FlMethodResponse *get_input_info(FlutterOnnxruntimePlugin *self, FlValue *args);
 static FlMethodResponse *get_output_info(FlutterOnnxruntimePlugin *self, FlValue *args);
@@ -156,6 +157,8 @@ static void flutter_onnxruntime_plugin_handle_method_call(FlutterOnnxruntimePlug
     response = run_inference(self, args);
   } else if (strcmp(method, "closeSession") == 0) {
     response = close_session(self, args);
+  } else if (strcmp(method, "listSessionIds") == 0) {
+    response = list_session_ids(self, args);
   } else if (strcmp(method, "getMetadata") == 0) {
     response = get_metadata(self, args);
   } else if (strcmp(method, "getInputInfo") == 0) {
@@ -517,6 +520,20 @@ static FlMethodResponse *close_session(FlutterOnnxruntimePlugin *self, FlValue *
   self->session_manager->closeSession(session_id);
 
   return FL_METHOD_RESPONSE(fl_method_success_response_new(fl_value_new_null()));
+}
+
+// Lists the IDs of all sessions currently held in memory. Useful for
+// reconciling app state after a Flutter hot restart, since hot restart
+// does not invoke OrtSession.close() on sessions created before it.
+static FlMethodResponse *list_session_ids(FlutterOnnxruntimePlugin *self, FlValue *args) {
+  std::vector<std::string> session_ids = self->session_manager->listSessionIds();
+
+  g_autoptr(FlValue) result = fl_value_new_list();
+  for (const auto &session_id : session_ids) {
+    fl_value_append_take(result, fl_value_new_string(session_id.c_str()));
+  }
+
+  return FL_METHOD_RESPONSE(fl_method_success_response_new(result));
 }
 
 static FlMethodResponse *get_metadata(FlutterOnnxruntimePlugin *self, FlValue *args) {
